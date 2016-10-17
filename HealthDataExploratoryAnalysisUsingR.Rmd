@@ -1,0 +1,195 @@
+---
+title: "Exploring the BRFSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+### Load data
+
+Make sure your data and R Markdown files are in the same directory. When loaded
+your data file will be called `brfss2013`. Delete this note when before you submit 
+your work. 
+
+```{r load-data}
+load("brfss2013.RData")
+```
+* * *
+
+## Part 1: Data
+Data is collected by interviewing population via phone calls. Data collected via this method may contain non-response, convenience sample and volunteer bias, hence, the causality cannot be inferred. However, generalization could be made regarding the population from which the data was collected. It could be stated that random sampling was used however, there is bias in the data.
+
+**Data Collection Method**: Random Sampling
+
+**Possible Bias**: Volunteer, Non-response, Conveinice [Assuming phone calls were made and surveys were put up on website or newspaper]
+
+**Scope of Inference**: Generalizability
+
+* * *
+
+## Part 2: Research questions
+
+**Research quesion 1:**
+How does sleep affect the health of a person? Is it likely that person getting more than 7 hours of sleep will be more healthy than the person having less than 7 hours of sleep? Is affect of sleep on health is same on both gender?
+
+**Research quesion 2:**
+Are good mental state and good health related? If so, then how does having health coverage improve or degrade the human health and psychology?
+
+**Research quesion 3:**
+Is a person with health care more likely to visit hospital compared to their counterparts? How does number of visit affect the health of a person?
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
+button (green button with orange arrow) above. Make sure that your code is visible
+in the project you submit. Delete this note when before you submit your work.
+
+###Research quesion 1:
+
+How does sleep affect the health of a person? Is it likely that person getting more than 7 hours of sleep will be more healthy than the person having less than 7 hours of sleep? Is effect of sleep on health is same on both genders?
+
+**Code**
+
+```{r}
+#Load data into new data frame
+rq1_data = select(brfss2013,sex,sleptim1,physhlth)
+
+#Omit NA for the purpose of processing Data
+rq1_data = na.omit(rq1_data)
+
+#Filter data
+filterd_data = rq1_data[rq1_data$physhlth<=30 & rq1_data$sleptim1 <= 23,]
+
+#Data processed to be graphed.
+graphData = filterd_data %>% group_by(sleptim1) %>% summarise(averageHealth = mean(physhlth))
+
+graph = ggplot(graphData, aes(x=graphData$sleptim1, y=graphData$averageHealth)) + geom_line(color="violet")
+
+graph + ggtitle("Affect of Sleep on the Health of a Person") + theme(plot.title = element_text(lineheight=.8, face="bold")) + xlab("Hours of Sleep") + ylab("Sickdays in Last Month") + scale_size_area()
+
+graphData
+```
+</br>
+Graph and the data described above illustrates the relationship between the variable sleep and number of days a person was feeling sick in the past month. It can be stated using the graph that a person is more likely to be sick if he has less than 6 hours of sleep a day or more than 8 hours of sleep. If a person manages to get 6-8 hours of sleep on daily basis than the average number of sick-days that he is likely to get in any given month is less than 5. The optimal sleep that an individual should get to remain healthiest is 7 hours according to the graph.
+
+The pattern in graph is that as the person get more and more sleep he becomes healthier till 7 hours of sleep. However, as an individual starts getting more and more hours of sleep after 7 hours, his health deteriorates.
+
+The table above describes that data points that were being used to plot the graph. Steps below describes the data processing required to come up with the table.
+
+1. Extract the columns required to do the analysis from the main data set. The columns that are be extracted are, sex representing gender of the respondent, sleptim1 denoting the average hours of sleep that respondent gets on daily basis, and phyhlth denoting the number of days the respondent was feeling sick in the previous month.
+2. Omit the NA values, as they can not be considered for the analysis.
+3. Filter the extreme values. For example, a person cannot be sick for more than 30 days in a month and a person cannot sleep for more than 24 hours a day.
+4. Group the filtered data by sleep time and average the number of days that a person was feeling sick for each group.
+5. Use ggplot to plot the data.
+6. Denote labels, title and other graph properties.
+</br>
+</br>
+
+**Code**
+
+```{r}
+filterd_data = rq1_data[rq1_data$physhlth<=30 & rq1_data$sleptim1 <= 22,]
+
+maleData = filterd_data[filterd_data$sex=='Male',]
+femaleData = filterd_data[filterd_data$sex=='Female',]
+
+maleFiltered = maleData %>% group_by(sleptim1) %>% summarise(averageHealth= mean(physhlth))
+
+femaleFiltered = femaleData %>% group_by(sleptim1) %>% summarise(averageHealth= mean(physhlth))
+
+graph = ggplot(maleFiltered, aes(x=maleFiltered$sleptim1)) + geom_line(aes(label = "Male", y=maleFiltered$averageHealth), color="blue") + geom_line(aes(label= "Female", y=femaleFiltered$averageHealth), color="pink")
+
+graph + ggtitle("Effect of Sleep on the Health of a Person Genderwise") + theme(plot.title = element_text(lineheight=.8, face="bold")) + xlab("Hours of Sleep") + ylab("Sickdays in Last Month")
+
+maleFiltered
+femaleFiltered
+```
+<br>
+The visualization given above explores the second part of the research question. It illustrates how the same hours of sleep on daily basis affects the health of a person depending on their gender. For the most part of the graph there is a very similar pattern for both genders. For both male and female, they would need 7 hours of sleep to stay healthiest.
+
+The visualization is also a source of suspicion and raises 2 additional questions. Are males generally healthier than female? And are females having 21-22 hours of sleep healthier? These questions are mainly raised due to the fact that female line representing the average number of sick days in the past month is high compared to their counterparts for the most of the graph. Also there this one odd minima for females near 21-22 hours of sleep. 
+
+The data described in the table above are used to plot the graph. The procedure to obtain processed data is as follows,
+
+1. Obtain the required rows from the main data set.
+2. Filter NA values.
+3. Filter outliers.
+4. Filter by male and female
+5. Group by sleep time and average the number of sickdays in past month.
+6. Draw visualization
+
+**Conclusion:** A person should get 6-8 hours of sleep daily to remain healthiest regardless of their gender. Any thing more or less than 6-8 hours of sleep will make person more prone to bad health. 
+
+* * *
+
+###Research quesion 2:
+Are good mental state and good health related?
+
+**Code**
+
+```{r}
+#Select Require columns for the analysis and omit nulls.
+rq2_data = select(brfss2013,genhlth,menthlth)
+rq2_data = na.omit(rq2_data)
+
+#Filter data to make it realistic.
+filtered_data = rq2_data[rq2_data$menthlth,]
+
+processed_data = filtered_data %>% group_by(genhlth) %>% summarise(avg = mean(menthlth))
+
+graph = ggplot(processed_data, aes(x = factor(genhlth), y = avg)) + geom_bar(stat = "identity")
+
+graph + ggtitle("Health Effect on Human Psychology") + theme(plot.title = element_text(lineheight=.8, face="bold")) + xlab("Health of an Individual") + ylab("Mental Sickdays in Last Month")
+
+processed_data
+```
+<br>
+There is a clear pattern in the visualization above that people with good health have less psychological pressure compared to people with poor health. Hence, it can be generalized that good physical health and mental health are related. It is very surprising that people with fair health are more likely to be depressed compared to people with poor health. This question could be investigated in detail by conducting a separate study. 
+
+The table above illustrates the person’s health and the average number of days a person was feeling mentally sick over the last month. Steps below illustrate the processing on the data,
+
+1. Select the columns required to do data processing. The column genhlth and menthlth are needed for the purpose of this analysis.
+2. Omit the NA values
+3. Filter the data such that it looks more realistic because a person cannot be sick for more than 30 days in a month.
+4. Filter the data and then use group by function to transform the data needed for graph.
+5. Plot visualization using the transformed dataset.
+
+
+
+**Conclusion:** Good physical health and mental health are related. A person with good health is more likely to be mentally healthy compared to person with fair or poor physical health. It is also likely that people with fair health are more mentally unhealthy compared to people with good health.
+
+* * *
+
+###Research quesion 3:
+Is a person with health care more likely to visit hospital compared to their counterparts?
+
+**Code**
+
+```{r}
+rq3_data = select(brfss2013,medicare,drvisits,genhlth)
+
+re3_data = na.omit(rq3_data)
+
+processData = re3_data %>% group_by(medicare) %>% summarise(avg = mean(drvisits))
+
+graph = ggplot(processData, aes(x = factor(medicare), y = avg)) + geom_bar(stat = "identity")
+
+graph + ggtitle("Number of Doctor Visit for person with and without Medicare") + theme(plot.title = element_text(lineheight=.8, face="bold")) + xlab("Personal Medicare") + ylab("Number of Doctor Visit in Last Year")
+```
+<br>
+It can be seen from the graph that an individual with health coverage is more likely to visit doctor compared to an individual without it. Average number of doctor visit that a person with medical coverage made in the past year was around 6.43 compared to a person without coverage who ended up making 4.83 visits. The visualization given above is constructed using the data given in the data frame summarised above.
+
+**Conclusion:**A person with medicoverage is more likely to visit hospital compared to person without it.
